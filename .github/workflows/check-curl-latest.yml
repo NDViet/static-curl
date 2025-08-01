@@ -1,0 +1,44 @@
+name: Check curl Latest Release
+
+on:
+  schedule:
+    - cron: '0 0 */2 * *' # every 2 days at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  check-latest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get latest curl version
+        id: curlver
+        run: |
+          latest=$(curl -s https://api.github.com/repos/curl/curl/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "Latest version: $latest"
+          echo "version=$latest" >> $GITHUB_OUTPUT
+
+      - name: Check if release exists
+        id: checkrelease
+        run: |
+          tag=${{ steps.curlver.outputs.version }}
+          exists=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/$tag" | jq -r '.tag_name // empty')
+          if [ "$exists" = "$tag" ]; then
+            echo "Release for $tag already exists."
+            echo "skip_build=true" >> $GITHUB_OUTPUT
+          else
+            echo "Release for $tag does not exist."
+            echo "skip_build=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Trigger build & release workflow
+        if: steps.checkrelease.outputs.skip_build == 'false'
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Build and Release
+          inputs: |
+            {
+              "curl_version": "${{ steps.curlver.outputs.version }}",
+              "do_release": "true"
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
