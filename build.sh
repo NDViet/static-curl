@@ -5,7 +5,7 @@
 # docker run --rm -v $(pwd):/tmp -w /tmp -e ARCH=aarch64 multiarch/alpine:aarch64-latest-stable /tmp/build.sh
 # docker run --rm -v $(pwd):/tmp -w /tmp -e ARCH=ARCH_HERE ALPINE_IMAGE_HERE /tmp/build.sh
 
-CURL_VERSION='8.11.0'
+CURL_VERSION=${CURL_VERSION:-"8.15.0"}
 
 [ "$1" != "" ] && CURL_VERSION="$1"
 
@@ -67,7 +67,7 @@ ldd src/curl && exit 1 || true
 #./src/curl -v http://www.moparisthebest.com/; ./src/curl -v https://www.moparisthebest.com/ip
 
 # we only want to save curl here
-mkdir -p /tmp/release/
-mv src/curl "/tmp/release/curl-$ARCH"
-cd ..
-rm -rf "curl-${CURL_VERSION}/"
+#mkdir -p /tmp/release/
+mv ./src/curl "/workspace/curl-$ARCH"
+#cd ..
+#rm -rf "curl-${CURL_VERSION}/"
